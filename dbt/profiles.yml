@@ -1,0 +1,9 @@
+# Local DuckDB profile. No credentials required.
+# Paths are relative to the directory you run dbt from (the repo root when using `make`).
+retail_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'data/retail.duckdb') }}"
+      threads: 4

@@ -27,3 +27,13 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 *.swp
+
+# Generated data and build artifacts
+data/
+*.duckdb
+*.duckdb.wal
+target/
+dbt/target/
+logs/
+dbt/logs/
+dbt_packages/

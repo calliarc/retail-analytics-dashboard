@@ -1,0 +1,192 @@
+version: 2
+
+models:
+  - name: dim_store
+    description: One row per store (fictional).
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+      - name: store_format
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["flagship", "standard", "express"]
+
+  - name: dim_product
+    description: One row per product, with list margin and price band.
+    columns:
+      - name: product_id
+        data_tests: [unique, not_null]
+      - name: category
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: &categories
+                  ["Grocery", "Beverages", "Household", "Personal Care",
+                   "Electronics", "Apparel", "Home & Garden", "Toys"]
+      - name: price_band
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["under 5", "5-20", "20-50", "50+"]
+
+  - name: dim_customer
+    description: One row per loyalty member with first/last order and lifetime value.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: home_store_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_id
+      - name: loyalty_tier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["bronze", "silver", "gold"]
+
+  - name: dim_date
+    description: Calendar spanning the first to last order date.
+    columns:
+      - name: date_day
+        data_tests: [unique, not_null]
+
+  - name: fct_sales
+    description: >
+      Sales fact at order-line grain. gross_revenue = quantity x list price;
+      net_revenue = gross_revenue - discount_amount; gross_margin = net_revenue - cogs.
+    columns:
+      - name: order_line_id
+        data_tests: [unique, not_null]
+      - name: order_date
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: store_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_id
+      - name: product_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+      - name: customer_id
+        description: Null for guest orders.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_id
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["in_store", "online"]
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: *categories
+      - name: net_revenue
+        data_tests: [not_null]
+
+  - name: mart_daily_sales
+    description: Daily sales by store and category.
+    columns:
+      - name: daily_sales_key
+        data_tests: [unique, not_null]
+      - name: date_day
+        data_tests: [not_null]
+      - name: store_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_id
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: *categories
+
+  - name: mart_margin
+    description: Monthly revenue, discount and gross margin by store and product.
+    columns:
+      - name: margin_key
+        data_tests: [unique, not_null]
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+      - name: store_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_id
+
+  - name: mart_basket
+    description: >
+      Product pair co-occurrence (market basket). support, attach rates and lift
+      for every pair bought together in at least `basket_min_pair_orders` orders.
+    columns:
+      - name: pair_key
+        data_tests: [unique, not_null]
+      - name: product_a_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+      - name: product_b_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+
+  - name: mart_inventory
+    description: Daily stock position, stockout flag and days of cover by store and product.
+    columns:
+      - name: inventory_key
+        data_tests: [unique, not_null]
+      - name: snapshot_date
+        data_tests: [not_null]
+      - name: store_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_id
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_id
+      - name: is_stockout
+        data_tests: [not_null]
+
+  - name: mart_cohorts
+    description: Monthly acquisition cohorts with retention and cumulative repeat rate.
+    columns:
+      - name: cohort_key
+        data_tests: [unique, not_null]
+      - name: cohort_month
+        data_tests: [not_null]
+      - name: months_since_first
+        data_tests: [not_null]

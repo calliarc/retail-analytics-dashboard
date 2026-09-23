@@ -1,0 +1,23 @@
+[project]
+name = "retail-analytics-dashboard"
+version = "0.1.0"
+description = "Retail analytics pipeline (synthetic data -> dbt/DuckDB -> Streamlit) by CalliArc"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = [".", "app"]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["common", "data_gen"]

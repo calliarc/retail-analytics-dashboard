@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      SYNTHETIC raw files written by `python -m data_gen` (see data_gen/).
+      Read directly from Parquet (default) or CSV via DuckDB. Set RAW_DATA_DIR
+      and RAW_FORMAT to point elsewhere.
+    meta:
+      external_location: "{{ env_var('RAW_DATA_DIR', 'data/raw') }}/{name}.{{ env_var('RAW_FORMAT', 'parquet') }}"
+    tables:
+      - name: stores
+        description: One row per store (fictional locations).
+      - name: products
+        description: Product catalogue with list price and unit cost.
+      - name: customers
+        description: Loyalty members (no names or contact details).
+      - name: promotions
+        description: Category-wide percentage-off promotions.
+      - name: orders
+        description: Order headers. customer_id is null for guest (non-member) orders.
+      - name: order_lines
+        description: Order lines at list price with any promotional discount.
+      - name: inventory_snapshots
+        description: End-of-day on-hand stock per store and product.
